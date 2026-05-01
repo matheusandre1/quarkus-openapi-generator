@@ -12,6 +12,28 @@ To see how to use with OpenAPITools, please see the xref:openapitools.adoc[OpenA
 
 include::./includes/server-apicurio-getting-started.adoc[leveloffset=+1, opts=optional]
 
+== Multi-file and multiple specifications
+
+Apicurio can generate from entry specs that use relative `$ref` values across multiple YAML or JSON files. Keep the referenced files under the same input base directory as the entry document and configure the entry spec normally:
+
+[source,properties]
+----
+quarkus.openapi.generator.server.use=apicurio
+quarkus.openapi.generator.server.input-base-dir=src/main/resources/openapi
+quarkus.openapi.generator.server.spec=module1.yaml
+----
+
+You can also generate multiple server stubs in one build:
+
+[source,properties]
+----
+quarkus.openapi.generator.server.use=apicurio
+quarkus.openapi.generator.server.spec.petstore_openapi_json.base-package=org.acme.api.petstore
+quarkus.openapi.generator.server.spec.simple_server_yaml.base-package=org.acme.api.animals
+----
+
+As with OpenAPITools, the identifier may also be an alias when you set `quarkus.openapi.generator.server.spec.<id>.spec=<file>` and, optionally, `quarkus.openapi.generator.server.spec.<id>.input-base-dir=<dir>`.
+
 [[codegen-extensions]]
 == Codegen Extensions
 

@@ -83,6 +83,46 @@ If a base package name is not provided, it will be used the default `org.acme`. 
 quarkus.openapi.generator.server.base-package=io.petstore
 ----
 
+== Multi-file specifications
+
+OpenAPITools can generate from entry specs that use relative `$ref` values across multiple YAML or JSON files. Place the full spec tree under the configured input base directory and point the generator at the entry document.
+
+For example:
+
+[source,properties]
+----
+quarkus.openapi.generator.server.use=openapitools
+quarkus.openapi.generator.server.input-base-dir=src/main/resources/openapi
+quarkus.openapi.generator.server.spec=module1.yaml
+----
+
+If `module1.yaml` contains `$ref: './common/common-spec.yaml#/components/schemas/CommonPet'`, the referenced file is resolved automatically as long as `common/common-spec.yaml` is present under the same base directory.
+
+== Multiple generated servers
+
+You can generate more than one server stub in the same build by configuring one block per spec:
+
+[source,properties]
+----
+quarkus.openapi.generator.server.use=openapitools
+quarkus.openapi.generator.server.spec.petstore_openapi_json.base-package=org.acme.api.petstore
+quarkus.openapi.generator.server.spec.simple_server_yaml.base-package=org.acme.api.animals
+----
+
+The identifier after `server.spec.` may also be an alias when you want to point explicitly to a file or override its input directory:
+
+[source,properties]
+----
+quarkus.openapi.generator.server.use=openapitools
+quarkus.openapi.generator.server.spec.petstore.spec=petstore-openapi.json
+quarkus.openapi.generator.server.spec.petstore.base-package=org.acme.api.petstore
+quarkus.openapi.generator.server.spec.animals.input-base-dir=src/main/resources/other-openapi
+quarkus.openapi.generator.server.spec.animals.spec=animals.yaml
+quarkus.openapi.generator.server.spec.animals.base-package=org.acme.api.animals
+----
+
+Properties defined under `quarkus.openapi.generator.server.spec.<id>.*` override the global `server.*` values for that specific generated server.
+
 By default, the extension generates non-reactive code. If you would like to change it, you can do it as follows:
 
 [source,properties]
