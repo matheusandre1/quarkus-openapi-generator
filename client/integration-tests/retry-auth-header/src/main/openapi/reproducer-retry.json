@@ -1,0 +1,81 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Reproducer Retry API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/fleet/vehicles": {
+      "get": {
+        "operationId": "listVehicles",
+        "summary": "List all vehicles.",
+        "tags": ["Vehicles"],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiclesListVehiclesResponseBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error"
+          }
+        },
+        "security": [{ "AccessTokenHeader": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GoaTagTinyResponseResponseBody": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      },
+      "DriverObjectResponseBody": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      },
+      "VehicleResponseObjectResponseBody": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      },
+      "GoaPaginationResponseResponseBody": {
+        "type": "object",
+        "properties": {
+          "endCursor": { "type": "string" },
+          "hasNextPage": { "type": "boolean" }
+        }
+      },
+      "VehiclesListVehiclesResponseBody": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/VehicleResponseObjectResponseBody" }
+          },
+          "pagination": { "$ref": "#/components/schemas/GoaPaginationResponseResponseBody" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "AccessTokenHeader": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

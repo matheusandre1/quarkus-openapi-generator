@@ -3,6 +3,7 @@ package io.quarkiverse.openapi.generator.providers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -74,7 +75,19 @@ class BaseCompositeAuthenticationProviderTest {
     }
 
     private void givenProviderWillAuthenticate(AuthProvider provider, MultivaluedMap<String, Object> headers, String token) {
+        givenProviderWillAuthenticate(provider, headers, token, null, null);
+    }
+
+    private void givenProviderWillAuthenticate(AuthProvider provider, MultivaluedMap<String, Object> headers, String token, String openApiSpecId, String authName) {
         try {
+            if (provider instanceof AbstractAuthProvider) {
+                if (openApiSpecId != null) {
+                    lenient().when(((AbstractAuthProvider) provider).getOpenApiSpecId()).thenReturn(openApiSpecId);
+                }
+                if (authName != null) {
+                    lenient().when(((AbstractAuthProvider) provider).getName()).thenReturn(authName);
+                }
+            }
             Mockito.doAnswer(inv -> {
                 headers.putSingle("Authorization", token);
                 return null;
@@ -363,4 +376,60 @@ class BaseCompositeAuthenticationProviderTest {
     // for tests covering the new operationId-based behavior.
 
     //endregion
+
+    @Test
+    void testRemoveStalePropagationHeadersBeforeAuthProviderRuns() throws IOException {
+        // Simulate retry scenario: stale QCG_* propagation headers left over from previous attempt
+        ClientRequestContext requestContext = createRequestContext("POST", "/api/test", "testOp");
+        MultivaluedMap<String, Object> headers = requestContext.getHeaders();
+
+        AuthProvider provider = Mockito.mock(AuthProvider.class);
+        OperationAuthInfo operation = createOperation();
+        when(provider.operationsToFilter()).thenReturn(List.of(operation));
+        givenProviderWillAuthenticate(provider, headers, "Bearer token1");
+
+        // Pre-populate a stale propagation header (simulating persistence across retries)
+        // QCG_{openApiSpecId}_{securitySchemeName}_{headerName} per AbstractAuthenticationPropagationHeadersFactory
+        headers.putSingle("QCG_spec1_AccessTokenHeader_Authorization", "Bearer stale-token");
+
+        BaseCompositeAuthenticationProvider composite = new BaseCompositeAuthenticationProvider("spec1",
+                List.of(provider));
+
+        composite.filter(requestContext);
+
+        // The stale propagation header must be removed before auth provider runs
+        assertTrue(!headers.containsKey("QCG_spec1_AccessTokenHeader_Authorization"),
+                "Stale QCG_* propagation header should be removed after filter()");
+
+        // And exactly one Authorization header should be present
+        List<Object> authHeaders = headers.get("Authorization");
+        assertTrue(authHeaders.size() <= 1,
+                "Authorization header should not have duplicates, found: " + authHeaders);
+        assertEquals("Bearer token1", headers.getFirst("Authorization"));
+    }
+
+    @Test
+    void testNoDuplicateAuthorizationHeadersOnRetry() throws IOException {
+        ClientRequestContext requestContext = createRequestContext("POST", "/api/test", "testOp");
+        MultivaluedMap<String, Object> headers = requestContext.getHeaders();
+
+        AuthProvider provider = Mockito.mock(AuthProvider.class);
+        OperationAuthInfo operation = createOperation();
+        when(provider.operationsToFilter()).thenReturn(List.of(operation));
+        givenProviderWillAuthenticate(provider, headers, "Bearer token1");
+
+        // Add a stale QCG_* header from a previous request/retry (as the propagation factory would leave)
+        headers.putSingle("QCG_spec1_AccessTokenHeader_Authorization", "Bearer stale-token");
+
+        BaseCompositeAuthenticationProvider composite = new BaseCompositeAuthenticationProvider("spec1",
+                List.of(provider));
+
+        composite.filter(requestContext);
+
+        List<Object> authHeaders = headers.get("Authorization");
+        assertTrue(authHeaders.size() <= 1,
+                "Authorization header should never accumulate duplicates during retries, found: "
+                        + authHeaders);
+    }
+
 }

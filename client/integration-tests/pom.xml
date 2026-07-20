@@ -123,6 +123,8 @@
     <profile>
       <id>resteasy-reactive</id>
       <modules>
+        <module>security</module>
+        <module>auth-provider</module>
         <module>multipart-client-form</module>
         <module>mutiny-return-rest-response</module>
         <module>return-rest-response</module>

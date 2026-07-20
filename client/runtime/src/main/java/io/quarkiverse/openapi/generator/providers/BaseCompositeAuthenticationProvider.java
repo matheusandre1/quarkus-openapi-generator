@@ -75,6 +75,15 @@ public class BaseCompositeAuthenticationProvider implements ClientRequestFilter 
                 removableHeaderPrefix
                         .add(propagationHeaderNamePrefix(((AbstractAuthProvider) authProvider).getOpenApiSpecId()));
             }
+        }
+
+        // Remove any stale propagation headers before processing. This prevents duplicate
+        // AUTHORIZATION headers when the request is retried, since the ClientHeadersFactory
+        // reads from the persistent clientOutgoingHeaders map which may still contain
+        // QCG_* headers left over from a previous retry iteration.
+        removeAuthenticationTemporalHeaders(requestContext, removableHeaderPrefix);
+
+        for (AuthProvider authProvider : authProviders) {
             if (canFilter(authProvider, requestContext)) {
                 Optional<Exception> possibleException = tryFilter(authProvider, requestContext);
                 if (possibleException.isEmpty()) {
