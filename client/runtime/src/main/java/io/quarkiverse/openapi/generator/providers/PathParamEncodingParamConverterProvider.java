@@ -63,6 +63,13 @@ public class PathParamEncodingParamConverterProvider implements ParamConverterPr
     @Override
     @SuppressWarnings("unchecked")
     public <T> ParamConverter<T> getConverter(Class<T> rawType, Type genericType, Annotation[] annotations) {
+        if (genericType == null) {
+            // RESTEasy classic's MP rest client (ProxyInvocationHandler) probes registered ParamConverterProviders
+            // with a null genericType before the request is built. Matching that probe makes it replace the method
+            // arguments with a partially-filled copy, silently nulling out every other annotated parameter (e.g.
+            // @QueryParam) of the same method. Legitimate conversion lookups always provide the generic type.
+            return null;
+        }
         if (rawType != String.class) {
             return null;
         }

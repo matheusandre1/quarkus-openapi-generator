@@ -8,6 +8,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.Test;
 
 import io.quarkiverse.openapi.generator.it.pathencoding.api.api.DefaultApi;
+import io.quarkiverse.openapi.generator.it.pathencoding.api.model.Profit;
 import io.quarkiverse.openapi.generator.it.pathencoding.api.model.Resource;
 import io.quarkiverse.openapi.generator.it.pathencoding.api.model.User;
 import io.quarkus.test.junit.QuarkusTest;
@@ -38,6 +39,15 @@ class PathEncodingTest {
         Resource result = api.getResourceById("my resource");
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo("my resource");
+    }
+
+    @Test
+    void testQueryParametersAreNotDroppedWhenCombinedWithPathParameter() {
+        Profit result = api.getStockProfit("KGTO", new java.math.BigDecimal("110"), "USD");
+        assertThat(result).isNotNull();
+        assertThat(result.getSymbol()).isEqualTo("KGTO");
+        assertThat(result.getCurrentPrice()).isEqualByComparingTo("110");
+        assertThat(result.getCurrency()).isEqualTo("USD");
     }
 
     @Test

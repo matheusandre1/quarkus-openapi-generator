@@ -68,6 +68,15 @@ class PathParamEncodingParamConverterProviderTest {
     }
 
     @Test
+    void doesNotMatchTheMicroProfileClientArgumentProbe() throws Exception {
+        // ProxyInvocationHandler (RESTEasy classic MP rest client) probes providers with a null genericType and,
+        // on any match, rebuilds the argument array dropping every other annotated parameter (e.g. @QueryParam).
+        assertNull(provider.getConverter(String.class, null, encodedPathParamAnnotations()));
+        assertNull(provider.getConverter(String.class, null, multiSegmentPathParamAnnotations()));
+        assertNull(provider.getConverter(String.class, null, plainPathParamAnnotations()));
+    }
+
+    @Test
     void reusesTheSameConverterInstance() throws Exception {
         Annotation[] annotations = encodedPathParamAnnotations();
 

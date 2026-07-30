@@ -50,6 +50,35 @@ paths:
         "404":
           description: Not found
 
+  /profit/{symbol}:
+    get:
+      summary: "Get stock profit"
+      description: "Tests that query parameters are not dropped when combined with a String path parameter."
+      operationId: getStockProfit
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: currentPrice
+          in: query
+          schema:
+            type: number
+        - name: currency
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profit'
+        "404":
+          description: Not found
+
 components:
   schemas:
     User:
@@ -68,4 +97,14 @@ components:
         id:
           type: string
         name:
+          type: string
+
+    Profit:
+      type: object
+      properties:
+        symbol:
+          type: string
+        currentPrice:
+          type: number
+        currency:
           type: string
